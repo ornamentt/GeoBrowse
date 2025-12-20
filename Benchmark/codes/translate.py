@@ -150,6 +150,6 @@ def translate_keys_in_jsonl(
 # ---------------------------
 if __name__ == "__main__":
     translate_keys_in_jsonl(
-        input_jsonl="/Users/gengxinyu/Documents/codes/GeoBrowse/Benchmark/data/level2/level2_zh.jsonl",
-        output_jsonl="/Users/gengxinyu/Documents/codes/GeoBrowse/Benchmark/data/level2/level2_en.jsonl"
+        input_jsonl="/Users/gengxinyu/Documents/codes/GeoBrowse/Benchmark/data/level1/level1_zh.jsonl",
+        output_jsonl="/Users/gengxinyu/Documents/codes/GeoBrowse/Benchmark/data/level1/level1_en.jsonl"
     )
