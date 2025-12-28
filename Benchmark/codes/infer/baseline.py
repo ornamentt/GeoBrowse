@@ -1,191 +1,170 @@
 import json
-import openai 
-import time
-import openai
-from openai import OpenAI
 import base64
+import os
 from pathlib import Path
-# from key import xinyu_or_key, xinyu_ms_key
 from tqdm import tqdm
+from openai import OpenAI
+from collections import defaultdict
 
-data_file = "/Users/gengxinyu/Documents/codes/GeoBrowse/Benchmark/data/level1/level1_en.jsonl" #输入文件，用test.jsonl
-output_file= "/Users/gengxinyu/Documents/codes/GeoBrowse/level1_en.jsonl" #输出文件
+data_file = "/Users/aurosky/Desktop/25UROP/GeoBrowse-yanjing/Benchmark/codes/infer/level1_en.jsonl"
+output_file = "level1_en_output.jsonl"
+
+MAX_ITEMS = 199  # run 199
 
 c_or = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key='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',
 )
 
-# c_ms = OpenAI(
-#     api_key=xinyu_ms_key,
-#     base_url="https://api-inference.modelscope.cn/v1/"
-# )
+model = "openai/gpt-4.1"
 
-or_models = [
-            # "openai/gpt-5-image",
-             "openai/gpt-4.1",
-            #  "openai/gpt-4o", 
-            #  "anthropic/claude-opus-4.5",
-            #  "google/gemini-3-pro-preview",
-            #  "google/gemini-2.5-flash-image",
-            #  "meta-llama/llama-3.2-90b-vision-instruct"
-             ]
-
-# ms_models = [
-#             "Qwen/Qwen3-VL-32B-Instruct", 
-#             "Qwen/Qwen3-VL-32B-Thinking"
-#             ]
-
-models = or_models
-#改这里的prompt
-sys_p = "Give the answer based on the image and the prompt provided concisely. Your output can only consist of a short number or word!"
+system_prompt = (
+"Your ONLY task: Analyze the provided `image_solution` text, count the number of distinct VISUAL CLUES that are explicitly described as being DIRECTLY observed from the image (ignore all reasoning/logic steps, combine image content for comprehensive evaluation).\n"
+    "Strict counting rules (MUST follow for the given Chinese/English mixed scenario):\n"
+    "1. Valid clue definition: Elements explicitly stated as 'observed/noticed from the image' (e.g., 'black hair and yellow skin of pedestrians' = 1 clue, as hair/skin color are features of the same subject; billboard text, traffic lane direction, license plate, etc.).\n"
+    "2. Special rules: License plate + driving/traffic lane direction = 2 separate clues; 2 different license plates = 2 individual clues (even if used to infer the same location).\n"
+    "3. Core principle: Be comprehensive, ERR ON THE SIDE OF COUNTING MORE (never miss any potential visual clues from the image), take the image as the ultimate basis and the `image_solution`'s description of the image as the key reference.\n"
+    "4. Invalid content (DO NOT count): Web search results, logical elimination/inference, geographic knowledge, conclusions, or elements not stated as 'observed from the image'.\n"
+    "5. Output requirement: Return ONLY a single integer (no other text, no lists, no explanations) – this number is the 'hops'."
+)
 
 def encode_image_to_base64(image_path):
-    with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8')
+    abs_path = os.path.abspath(image_path)
+    if not os.path.exists(abs_path):
+        print(f"warning：image not found - {abs_path}")
+        return None
+    
+    try:
+        with open(abs_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode('utf-8')
+    except Exception as e:
+        print(f"fail to get image {abs_path}: {e}")
+        return None
 
-
-def generate_with_openai(prompt, image_paths=None,model="gpt-4o-mini", system_prompt=None, max_tokens=16384, temperature=0.1, top_p=1.0,
-                         retry_attempt=5, verbose=False,type = None) : # T/F,response
-    if model in or_models:
-        client = c_or
-    elif model in ms_models:
-        client = c_ms
-    else:
-        raise ValueError("Choose a model provider")
-
+def generate_hops(prompt, image_paths, model="openai/gpt-4.1"):
     if isinstance(image_paths, (str, Path)):
         image_paths = [str(image_paths)]
-    
+
     image_data = []
     for path in image_paths:
         base64_str = encode_image_to_base64(path)
-        image_data.append({
-            "type": "image_url",
-            "image_url": {
-                "url": f"data:image/jpeg;base64,{base64_str}"
-            }
-        })
+        if base64_str:
+            image_data.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{base64_str}"
+                }
+            })
 
-    if system_prompt:
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content":[
-                { 
-                "type": "text", 
-                "text": prompt
-            },
+    user_prompt = (
+        f"Based on the provided images and the following reasoning text, extract ALL visual clues directly from the images, then count them:\n"
+        f"Reasoning text: {prompt}\n"
+        f"Strictly follow the rules in the system prompt: list all clues first, then output the total count as a single number."
+    )
 
-        ]},
-        ]
-        if image_paths:
-            for image in image_data:
-                messages[1]["content"].append(image)
-    else:
-        messages = [
-            {"role": "user", "content":[
-                { 
-                "type": "text", 
-                "text": prompt
-            },
-            
-        ]}
-        ]
-        if image_paths:
-            for image in image_data:
-                messages[1]["content"].append(image)
-    retry_num = 0
-    generation_success = False
-    while retry_num < retry_attempt and not generation_success:
-        try:
-            if model not in ["openai/gpt-5-image","o1-mini","o3-mini"]:
-                gen = client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    top_p=top_p
-                )
-            else:
-                gen = client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    max_completion_tokens=max_tokens,
-                    #temperature=temperature,
-                    #top_p=top_p
-                )
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": [{"type": "text", "text": user_prompt}] + image_data}
+    ]
 
-            generation_success = True
-            input_tokens = gen.usage.prompt_tokens
-            output_tokens = gen.usage.completion_tokens
+    try:
+        response = c_or.chat.completions.create(
+            model=model,
+            messages=messages,
+            max_tokens=16, 
+            temperature=0.0,  
+            top_p=1.0
+        )
+        answer = response.choices[0].message.content.strip()
+    
+        lines = answer.split('\n')
+        hops = -1
+        for line in reversed(lines):
+            line = line.strip()
+            if line.isdigit():
+                hops = int(line)
+                break
+        if hops == -1:
+            digits = [int(c) for c in answer if c.isdigit()]
+            hops = digits[-1] if digits else -1
+        return hops, answer  
+    except Exception as e:
+        print(f"fail to use llm: {e}")
+        return -1, f"Error: {str(e)}"
 
-            if verbose:
-                print('\n\n----------------------\n')
-                print(gen.choices[0].message.content.strip())
-                print("Prompt tokens: {}; Completion tokens: {}".format(input_tokens, output_tokens))
-                print('\n----------------------\n\n')
-        except openai.APIError as e:  # TRIGGERED OpenAI API ERROR, Could be network issue
-            if verbose:
-                print(e)
-            retry_num += 1
-            generation_success = False
-            time.sleep(5)
-        except openai.RateLimitError as e:  # TRIGGERED OpenAI RATE LIMIT
-            if verbose:
-                print(e)
-            retry_num += 1
-            generation_success = False
-            time.sleep(20)
-        except openai.BadRequestError as e:  # TRIGGERED OpenAI CONTENT SAFETY FILTER
-            if verbose:
-                print(e)
-            retry_num += 1
-            generation_success = False
-            # time.sleep(1)
-        except:
-            retry_num += 1
-            generation_success = False
-            time.sleep(2)
-    if generation_success:
-        return True, gen.choices[0].message.content
-
-
-#data = json.load(open(data_file, "r", encoding='utf-8'))
-
-with open(data_file, "r", encoding="utf-8") as f:
-    data = []
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            data.append(json.loads(line))
-        except json.JSONDecodeError as e:
-            print(f"Skipping invalid JSON line: {e}")
-
-for model in models:
-
-    with open(output_file, "w", encoding="utf-8") as f_out:
-        for item in tqdm(data, desc=f"Model: {model}", total=len(data)):
+def count_hop_ids(input_file):
+    hop_dict = defaultdict(list)
+    
+    with open(input_file, "r", encoding="utf-8") as f:
+        for line in f:
             try:
-                prompt = item["prompt"]
-                image_paths = item.get("image", [])
+                item = json.loads(line.strip())
+                hop = item.get("hops")
+                qid = item.get("question_id")
+                if hop != -1 and qid != -1:
+                    hop_dict[hop].append(qid)
+            except json.JSONDecodeError as e:
+                print(f"fail to get jsonl: {e}")
+                continue
+    
+    for hop in sorted(hop_dict.keys()):
+        hop_dict[hop].sort()
+        print(f"Hop {hop} IDs: {hop_dict[hop]}")
+    
+    return hop_dict
 
-                success, response = generate_with_openai(
-                    prompt,
-                    image_paths=image_paths,
-                    model=model,
-                    system_prompt=sys_p,
-                    verbose=True
-                )
-            except Exception as e:
-                print(e)
-                # breakpoint()
-                success = False
 
-            result_item = item.copy()
-            #现在存的key是"llm_answer"，改成"hops"
-            result_item["llm_answer"] = response if success else "Generation failed after retries."
+if __name__ == "__main__":
+    
+    data = []
+    try:
+        with open(data_file, "r", encoding="utf-8") as f:
+            line_count = 0
+            for line in f:
+                if line_count >= MAX_ITEMS:
+                    break
+                try:
+                    item = json.loads(line.strip())
+                    data.append(item)
+                    line_count += 1
+                except json.JSONDecodeError as e:
+                    print(f"解析第{line_count+1}行JSON失败: {e}")
+                    continue
+        print(f"complete loading {len(data)} data（aim {MAX_ITEMS} ）")
+    except FileNotFoundError:
+        print(f"fail：can't find file {data_file}，please check the path")
+        exit(1)
 
-            # JSONL: 一行一个 JSON
-            f_out.write(json.dumps(result_item, ensure_ascii=False) + "\n")
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    image_root = os.path.abspath(os.path.join(current_dir, '../../data/level1/images'))
+    print(f"from image root：{image_root}")
+
+    with open(output_file, "w", encoding="utf-8") as fout:
+        desc = f"Processing first {MAX_ITEMS} examples"
+        for item in tqdm(data, desc=desc):
+            qid = item.get("question_id", -1)
+            solution = item.get("image_solution", "")
+            
+            original_image_paths = item.get("image", [])
+            if isinstance(original_image_paths, str):
+                original_image_paths = [original_image_paths]
+            correct_image_paths = []
+            for path in original_image_paths:
+                path_str = str(path) if path else ""
+                image_filename = os.path.basename(path_str)
+                correct_path = os.path.join(image_root, image_filename)
+                correct_image_paths.append(correct_path)
+
+            hops, answer = generate_hops(solution, correct_image_paths)
+            
+            output_item = {
+                "question_id": qid,
+                "hops": hops
+            }
+
+            fout.write(json.dumps(output_item, ensure_ascii=False) + "\n")
+
+    print(f"\n✅ finish！out put file：{os.path.abspath(output_file)}")
+
+    print("\n========== hop dataset ==========")
+    count_hop_ids(output_file)
