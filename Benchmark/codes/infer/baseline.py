@@ -13,7 +13,7 @@ output_file= "/Users/gengxinyu/Documents/codes/GeoBrowse/level1_en.jsonl" #è¾“å‡
 
 c_or = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key='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',
+    api_key='',
 )
 
 # c_ms = OpenAI(
