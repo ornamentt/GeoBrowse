@@ -9,7 +9,7 @@ from openai import OpenAI
 
 MODEL_NAME = "Qwen/Qwen2.5-32B-Instruct"
 DASHSCOPE_BASE_URL = os.getenv("DASHSCOPE_BASE_URL", "https://api-inference.modelscope.cn/v1/")
-DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY", "ms-4fcc0072-2e28-4428-9812-cbc7603ac9e9")
+DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY", "")
 if not DASHSCOPE_API_KEY:
     raise RuntimeError("Environment variable DASHSCOPE_API_KEY is not set.")
 
