@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cognitive-kernel-gaia"
+version = "0.1.0"
+description = "A lightweight multi-agent framework for complex task solving."
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+  {name = "Cognitive Kernel GAIA contributors"}
+]
+
+[tool.setuptools.packages.find]
+where = ["System"]
+include = ["ckv3*"]

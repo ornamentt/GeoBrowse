@@ -1,0 +1,16 @@
+Cognitive Kernel GAIA
+
+This project includes a lightweight multi-agent framework and related web,
+vision, and evaluation utilities.
+
+The maintainers should preserve attribution for third-party ideas or code
+that influenced this repository. Internal notes mention inspiration or prior
+work from:
+
+- Hugging Face smolagents
+- CK-V2 web-browser and code-executor components
+- rollback-project prompt/data processing
+
+Before publishing a formal release, review the exact source files for copied
+third-party code and keep any required upstream license notices with the
+corresponding files.
