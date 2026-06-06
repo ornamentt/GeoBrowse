@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Node/web runtime artifacts
+node_modules/
+System/ckv3/ck_web/_web/screenshots/
+System/ckv3/ck_web/_web/downloads/
+
+# Runtime data and outputs
+data/
+outputs/
+logs/
+*.log
+_log*
+
+# Temporary binaries and local experiments
+System/quicksort_bin
+*.bin
+*.tmp
+*.bak
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
