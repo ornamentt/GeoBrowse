@@ -1,0 +1,14 @@
+.git
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+node_modules/
+System/ckv3/ck_web/_web/screenshots/
+data/
+outputs/
+logs/
+*.log
+.venv/
+venv/
