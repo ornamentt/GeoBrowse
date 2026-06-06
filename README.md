@@ -1,6 +1,6 @@
 # GeoBrowse
 
-GeoBrowse is an open-source system for geography-oriented web browsing and multimodal task solving. Its core inference component is **GATE**, a reasoning framework that coordinates web browsing, visual reasoning, search, file/document utilities, and evaluation helpers.
+GeoBrowse is a benchmark with open-source system for geography-oriented web browsing and multimodal task solving. Its core inference component is **GATE**, a reasoning framework that coordinates web browsing, visual reasoning, search, file/document utilities, and evaluation helpers.
 
 This repository is the sanitized open-source release. It contains no API keys, browser cookies, private Git remotes, generated dependency folders, or benchmark datasets.
 
