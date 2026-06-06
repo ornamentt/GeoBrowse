@@ -1,6 +1,6 @@
-# Cognitive Kernel GAIA
+# GeoBrowse
 
-Cognitive Kernel GAIA is a lightweight multi-agent framework for complex task solving. It combines a main reasoning agent with web browsing, visual reasoning, search, file/document utilities, and evaluation helpers.
+GeoBrowse is an open-source system for geography-oriented web browsing and multimodal task solving. Its core inference component is **GATE**, a reasoning framework that coordinates web browsing, visual reasoning, search, file/document utilities, and evaluation helpers.
 
 This repository is the sanitized open-source release. It contains no API keys, browser cookies, private Git remotes, generated dependency folders, or benchmark datasets.
 
@@ -8,6 +8,7 @@ This repository is the sanitized open-source release. It contains no API keys, b
 
 - Runs task-solving agents over JSONL datasets.
 - Uses an LLM/VLM backend through `gpt:*` model names or OpenAI-compatible HTTP endpoints.
+- Uses the GATE reasoning framework to coordinate planning, tool use, browser interactions, and answer generation.
 - Starts a local Playwright browser service for web tasks.
 - Supports DuckDuckGo or Google CSE style search backends.
 - Saves per-task session traces and evaluation results as JSONL.
@@ -41,8 +42,8 @@ See [SECURITY.md](SECURITY.md) and [OPEN_SOURCE_RELEASE_CHECKLIST.md](OPEN_SOURC
 ├── scripts/verify_open_source_ready.sh
 ├── System/
 │   └── ckv3/
-│       ├── agents/                # Core agent abstractions, model wrapper, tools
-│       ├── ck_main/               # Main multi-agent runner
+│       ├── agents/                # Core GATE agent abstractions, model wrapper, tools
+│       ├── ck_main/               # GATE multi-agent runner
 │       ├── ck_web/                # Playwright-backed web agent
 │       ├── ck_web/_web/           # Node/Express browser service
 │       ├── ck_web2/               # Alternate browser utilities
@@ -79,8 +80,8 @@ brew install poppler ffmpeg
 ### 1. Clone And Enter The Repo
 
 ```bash
-git clone <your-public-repo-url> cognitive_kernel_GAIA
-cd cognitive_kernel_GAIA
+git clone https://github.com/ornamentt/GeoBrowse.git
+cd GeoBrowse
 ```
 
 ### 2. Create Python Environment
@@ -185,13 +186,13 @@ OUTPUT_DIR=/path/to/outputs \
 Containerized execution is recommended because model-generated code may run locally.
 
 ```bash
-docker build -t cognitive-kernel-gaia .
+docker build -t geobrowse .
 mkdir -p outputs
 docker run --rm \
   --env-file .env \
   -v "$PWD/data:/app/data:ro" \
   -v "$PWD/outputs:/app/outputs" \
-  cognitive-kernel-gaia
+  geobrowse
 ```
 
 The Docker image runs as a non-root user. You should still treat it as an untrusted-code runtime and avoid mounting sensitive host directories.
@@ -399,7 +400,7 @@ Create and mount an output directory:
 
 ```bash
 mkdir -p outputs
-docker run --rm --env-file .env -v "$PWD/data:/app/data:ro" -v "$PWD/outputs:/app/outputs" cognitive-kernel-gaia
+docker run --rm --env-file .env -v "$PWD/data:/app/data:ro" -v "$PWD/outputs:/app/outputs" geobrowse
 ```
 
 ## Development Notes
