@@ -399,6 +399,7 @@ This repository is released under the MIT License. See [LICENSE](LICENSE) and [N
 
 If you find GeoBrowse useful in your research, please cite:
 
+```bibtex
 @misc{geng2026geobrowsegeolocationbenchmarkagentic,
   title={GeoBrowse: A Geolocation Benchmark for Agentic Tool Use with Expert-Annotated Reasoning Traces},
   author={Xinyu Geng and Yanjing Xiao and Yuyang Zhang and Hanwen Wang and Xinyan Liu and Rui Min and Tianqing Fang and Yi R. Fung},
@@ -408,3 +409,4 @@ If you find GeoBrowse useful in your research, please cite:
   primaryClass={cs.CL},
   url={https://arxiv.org/abs/2604.04017}
 }
+```
